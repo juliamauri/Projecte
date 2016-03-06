@@ -60,13 +60,14 @@ struct globals
 	SDL_Texture* shot;
 	projectile shots[NUM_SHOTS];
 	int last_shot;
-	bool fire, up, down, left, right;
+	bool fire, up, down, left, right, speed;
 	KEY_STATE* keyboard;
 	// TODO 4:
 	// Add pointers to store music and the laser fx
 	Mix_Music* music;
 	Mix_Chunk* laser;
 	int scroll;
+	int background_movement;
 } g;
 
 // ----------------------------------------------------------------
@@ -106,6 +107,7 @@ void Start()
 	
 
 	// Init other vars --
+	g.background_movement = 0;
 	g.scroll = 0;
 	g.ship_x = 100;
 	g.ship_y = SCREEN_HEIGHT / 2;
@@ -158,6 +160,7 @@ bool CheckInput()
 	g.left = g.keyboard[SDL_SCANCODE_LEFT] == KEY_REPEAT;
 	g.right = g.keyboard[SDL_SCANCODE_RIGHT] == KEY_REPEAT;
 	g.fire = g.keyboard[SDL_SCANCODE_SPACE] == KEY_DOWN;
+	g.speed = g.keyboard[SDL_SCANCODE_LSHIFT] == KEY_REPEAT;
 
 	return true;
 }
@@ -165,12 +168,18 @@ bool CheckInput()
 // ----------------------------------------------------------------
 void MoveStuff()
 {
+	int vel = 25;
+	 
+	if (g.speed) vel += SHIP_SPEED; else vel += SHIP_SPEED - 25;
+
 	// Calc new ship position
 	// TODO 8: move the ship
-	if (g.up) g.ship_y -= SHIP_SPEED;
-	if (g.down) g.ship_y += SHIP_SPEED;
-	if (g.left)	g.ship_x -= SHIP_SPEED;
-	if (g.right) g.ship_x += SHIP_SPEED;
+	if (g.up) g.ship_y -= vel;
+	if (g.down) g.ship_y += vel;
+	if (g.left)	g.ship_x -= vel;
+	if (g.right) g.ship_x += vel;
+
+	
 
 	if(g.fire)
 	{
@@ -214,17 +223,24 @@ void Draw()
 	// Remember that you have to draw the
 	// background twice to fake repetition
 
-	target.x = 0;
+	target.x = g.background_movement;
 	target.y = 0;
 	target.w = g.background_width;
 	target.h = SCREEN_HEIGHT;
 
-	targets.x = target.x + target.w;
+
+	targets.x = target.w + g.background_movement;
 	targets.y = 0;
 	targets.w = g.background_width;
 	targets.h = SCREEN_HEIGHT;
 
+	g.background_movement -= SCROLL_SPEED;
+
+	if (target.x <= -g.background_width) g.background_movement = 0;
+
+
 	SDL_RenderCopy(g.renderer, g.background, NULL, &target);
+	
 	SDL_RenderCopy(g.renderer, g.background, NULL, &targets);
 	
 
